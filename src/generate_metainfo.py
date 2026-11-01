@@ -115,6 +115,10 @@ define_function(financials_xml,
                 'getHistoric', 'Fetches Historic Financial Data.',
                 [('ticker', 'The ticker symbol.'), ('datacode', 'The data code.'), ('date', 'The date.'),
                  ('source', 'The source.')])
+define_function(financials_xml,
+                'getLatestValue', 'Fetches the Latest Financial Data for a given Month and Year.',
+                [('ticker', 'The ticker symbol.'), ('datacode', 'The data code.'), ('year', 'The year.'),
+                 ('month', 'The month (1-12).'), ('source', 'The source.')])
 
 financials_xml.write('</node>\n')
 financials_xml.write('</node>\n')

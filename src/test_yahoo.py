@@ -535,6 +535,29 @@ class Test(unittest.TestCase):
         s = financials.getHistoric('IBM', Datacode.CLOSE.value, '2017-01-03', cell_range)
         self.assertEqual(s, 'Cell range not allowed for source', 'test_errors')
 
+    def test_get_latest_value(self):
+        # Future date check
+        s = financials.getLatestValue('IBM', Datacode.CLOSE.value, 2099, 1, 'YAHOO')
+        self.assertEqual(s, "Future date '2099-01'", 'test_get_latest_value future check')
+
+        # Invalid month check
+        s = financials.getLatestValue('IBM', Datacode.CLOSE.value, 2024, 13, 'YAHOO')
+        self.assertEqual(s, "Month 13 must be between 1 and 12", 'test_get_latest_value invalid month')
+
+        # Cell range checks
+        cell_range = ((1, 2), ('3', '4'))
+        s = financials.getLatestValue(cell_range, Datacode.CLOSE.value, 2024, 1, 'YAHOO')
+        self.assertEqual(s, 'Cell range not allowed for ticker', 'test_get_latest_value range ticker')
+
+        s = financials.getLatestValue('IBM', cell_range, 2024, 1, 'YAHOO')
+        self.assertEqual(s, 'Cell range not allowed for datacode', 'test_get_latest_value range datacode')
+
+        s = financials.getLatestValue('IBM', Datacode.CLOSE.value, cell_range, 1, 'YAHOO')
+        self.assertEqual(s, 'Cell range not allowed for year', 'test_get_latest_value range year')
+
+        s = financials.getLatestValue('IBM', Datacode.CLOSE.value, 2024, cell_range, 'YAHOO')
+        self.assertEqual(s, 'Cell range not allowed for month', 'test_get_latest_value range month')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

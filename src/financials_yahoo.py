@@ -463,5 +463,55 @@ class Yahoo(BaseClient):
 
         return None
 
+    def getLatestValue(self, ticker: str, datacode: int, year: int, month: int):
+        """
+        Retrieve the latest available trading quote for a given year and month.
+
+        :param ticker: the ticker symbol e.g. VOD.L
+        :param datacode: the requested datacode
+        :param year: year (e.g. 2025)
+        :param month: month (1-12)
+        :return: requested datacode value on the last trading day of that month
+        """
+        # remove white space
+        ticker = "".join(ticker.split())
+
+        # Determine the last calendar day of the given month
+        if month == 12:
+            last_date_of_month = datetime.date(year, 12, 31)
+        else:
+            last_date_of_month = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
+
+        # Do not allow querying months completely in the future
+        today = datetime.date.today()
+        first_date_of_month = datetime.date(year, month, 1)
+        if first_date_of_month > today:
+            return 'Future date \'{:04d}-{:02d}\''.format(year, month)
+
+        # Target date is either the end of the month or today (if month is current)
+        target_date = min(last_date_of_month, today).isoformat()
+
+        # Ensure historical data up to target_date is loaded into self.historicdata
+        # We invoke getHistoric for target_date. Even if target_date is a non-trading day,
+        # getHistoric will ensure the ticker history is downloaded/cached if needed.
+        _ = self.getHistoric(ticker, datacode, target_date)
+
+        if ticker in self.historicdata:
+            ticks = self.historicdata[ticker]
+            month_prefix = '{:04d}-{:02d}'.format(year, month)
+            # Find all trading days in ticks for this year and month that are <= target_date
+            month_ticks = [d for d in ticks if d.startswith(month_prefix) and d <= target_date]
+            if month_ticks:
+                latest_trading_day = max(month_ticks)
+                return self._return_value(ticks[latest_trading_day], datacode)
+
+            if target_date < min(ticks):
+                return 'Date before available history \'{:04d}-{:02d}\''.format(year, month)
+
+            return 'No trading day in \'{:04d}-{:02d}\''.format(year, month)
+
+        return 'No data available for ticker \'{}\''.format(ticker)
+
+
 def createInstance(ctx):
     return Yahoo(ctx)
